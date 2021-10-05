@@ -1,0 +1,29 @@
+#+TITLE: Exercise 2
+#+AUTHOR: Sholde
+#+DATE: October 2021
+
+* Dependencies
+
+  - gcc
+  - libc
+  - make
+
+* Compilation
+
+  #+BEGIN_SRC bash
+$ make
+  #+END_SRC
+
+* Usage
+
+  Take 2 arguments:
+  1. The configuration file
+  2. The output file
+
+  #+BEGIN_SRC bash
+$ ./main configuration.conf output_file.data
+  #+END_SRC
+
+* Configuration file
+
+  See file ~template.conf~.
