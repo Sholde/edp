@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "config.h"
+#include "stats.h"
 #include "request.h"
 
 #include <time.h>
@@ -200,9 +201,10 @@ u64 *gen_size_normal(u64 n, u64 s_mean, u64 s_var)
   double mean = (double)s_mean;
   double var = (double)s_var;
 
+  init_random();
+
   for (u64 i = 0; i < n; i++)
-    size[i] = (exp(pow(i - mean, 2) / (2 * pow(var, 2)))
-               * (var * sqrt((double)2 * PI)));
+    size[i] = (u64)(mean + sqrt(-2 * log10(1 - get_random()) * var) * cos(2 * PI * get_random()));
 
   return size;
 }
@@ -293,6 +295,52 @@ void print_request(char *filename, request_t *r)
 
   // Close file
   fclose(f);
+}
+
+void print_stats(request_t *r)
+{
+  // Number of request
+  printf("n: %llu\n", r->n);
+
+  // Start time
+  u64 start_mean = arithmetic_mean(r->start, r->n);
+  u64 start_median = median(r->start, r->n);
+
+  printf("start_time:\n");
+  printf("  - mean: %llu\n", start_mean);
+  printf("  - median: %llu\n", start_median);
+
+  // Type
+  u64 count_read = 0;
+  u64 count_write = 0;
+
+  for (u64 i = 0; i < r->n; i++)
+    {
+      if (r->type[i])  // write = 1
+        count_write++;
+      else             // read = 0
+        count_read++;
+    }
+
+  printf("type:\n");
+  printf("  - number of read: %llu\n", count_read);
+  printf("  - number of write: %llu\n", count_write);
+
+  // Address
+  u64 address_mean = arithmetic_mean(r->address, r->n);
+  u64 address_median = median(r->address, r->n);
+
+  printf("address:\n");
+  printf("  - mean: %llu\n", address_mean);
+  printf("  - median: %llu\n", address_median);
+
+  // Size
+  u64 size_mean = arithmetic_mean(r->size, r->n);
+  u64 size_median = median(r->size, r->n);
+
+  printf("size:\n");
+  printf("  - mean: %llu\n", size_mean);
+  printf("  - median: %llu\n", size_median);
 }
 
 void free_request(request_t *r)

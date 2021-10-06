@@ -34,6 +34,7 @@ u64 *gen_size_normal(u64 n, u64 s_mean, u64 s_var);
 
 request_t *gen_request(config_t *config);
 void print_request(char *filename, request_t *r);
+void print_stats(request_t *r);
 void free_request(request_t *r);
 
 #endif // _REQUEST_H_

@@ -21,6 +21,7 @@ int main(int argc, char **argv)
 
   // Print request
   print_request(argv[2], r);
+  print_stats(r);
 
   // Release memory
   free_config(config);
