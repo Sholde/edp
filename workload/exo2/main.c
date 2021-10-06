@@ -6,6 +6,7 @@
 
 int main(int argc, char **argv)
 {
+  // Check argument
   if (argc != 3)
     {
       printf("Need 2 arguments:\n");
@@ -14,11 +15,14 @@ int main(int argc, char **argv)
       return 1;
     }
 
+  // Init
   config_t *config = read_config_file(argv[1]);
   request_t *r = gen_request(config);
 
+  // Print request
   print_request(argv[2], r);
 
+  // Release memory
   free_config(config);
   free_request(r);
 

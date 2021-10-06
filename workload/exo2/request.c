@@ -18,6 +18,7 @@ static u64 get_random()
   return rand();
 }
 
+// [0, n - 1]
 u64 *gen_estampille(u64 n)
 {
   u64 *e = aligned_alloc(ALIGNED, sizeof(u64) * n);
@@ -28,6 +29,7 @@ u64 *gen_estampille(u64 n)
   return e;
 }
 
+// [t_0, t_0 + t, t_0 + 2t, ..., t_0 + (n - 1)t]
 u64 *gen_start_seq(u64 n, u64 t_0, u64 t)
 {
   u64 *start = aligned_alloc(ALIGNED, sizeof(u64) * n);
@@ -38,6 +40,7 @@ u64 *gen_start_seq(u64 n, u64 t_0, u64 t)
   return start;
 }
 
+// [t_min, t_0 + random(t_min, t_max), t_1 + random(t_min, t_max), ...]
 u64 *gen_start_uniform(u64 n, u64 t_min, u64 t_max)
 {
   u64 *start = aligned_alloc(ALIGNED, sizeof(u64) * n);
@@ -52,8 +55,12 @@ u64 *gen_start_uniform(u64 n, u64 t_min, u64 t_max)
   return start;
 }
 
+// For type, I encoded read as 0 and write as 1
+// Here p, the probability, need to be between [0, 100]
+// Because I use unsigned long long which are 64 unsigned integer
 u64 *gen_type_seq(u64 n, u64 p)
 {
+  // Check if probability is between [0, 100]
   if (p > 100)
     {
       printf("p need to be between [0, 100]\n");
@@ -66,7 +73,8 @@ u64 *gen_type_seq(u64 n, u64 p)
 
   for (u64 i = 0; i < n; i++)
     {
-      u64 is_write = get_random() % 101; // [0, 100] include
+      // draw a random number between [0, 100] to compare with probability p
+      u64 is_write = get_random() % 101;
 
       if (is_write < p)
         type[i] = 1; // write
@@ -77,24 +85,27 @@ u64 *gen_type_seq(u64 n, u64 p)
   return type;
 }
 
+// For type, I encoded read as 0 and write as 1
+// n_r: number of read
+// n_w: number of write
 u64 *gen_type_uniform(u64 n, u64 n_r, u64 n_w)
 {
   u64 *type = aligned_alloc(ALIGNED, sizeof(u64) * n);
 
-  u64 r_w = 0;
-  u64 count = 0;
+  u64 r_w = 0;   // specify the current type
+  u64 count = 0; // count the current type
 
   for (u64 i = 0; i < n; i++)
     {
-      if (r_w == 0 && count == n_r) // read
+      if (r_w == 0 && count == n_r) // done n_r read
         {
-          r_w = 1;
-          count = 0;
+          r_w = 1;   // change to write
+          count = 0; // reset counter
         }
-      else if (r_w == 1 && count == n_w) // write
+      else if (r_w == 1 && count == n_w) // done n_w write
         {
-          r_w = 0;
-          count = 0;
+          r_w = 0;   // change to read
+          count = 0; // reset counter
         }
 
       type[i] = r_w;
@@ -104,6 +115,7 @@ u64 *gen_type_uniform(u64 n, u64 n_r, u64 n_w)
   return type;
 }
 
+// [a, a + s, a + 2s, ..., a + (n - 1)s]
 u64 *gen_addr_seq(u64 n, u64 a, u64 s)
 {
   u64 *addr = aligned_alloc(ALIGNED, sizeof(u64) * n);
@@ -114,6 +126,7 @@ u64 *gen_addr_seq(u64 n, u64 a, u64 s)
   return addr;
 }
 
+// [random(a_min, a_max), ...]
 u64 *gen_addr_uniform(u64 n, u64 a_min, u64 a_max)
 {
   u64 *addr = aligned_alloc(ALIGNED, sizeof(u64) * n);
@@ -126,9 +139,11 @@ u64 *gen_addr_uniform(u64 n, u64 a_min, u64 a_max)
   return addr;
 }
 
-// To do
+// Here p_h is a probability and it need to be between [0, 100]
+// Because I use unsigned long long which are 64 unsigned integer
 u64 *gen_addr_random(u64 n, u64 h, u64 c, u64 p_h)
 {
+  // Check if p_h is between [0, 100]
   if (p_h > 100)
     {
       printf("p_h need to be between [0, 100]\n");
@@ -141,7 +156,8 @@ u64 *gen_addr_random(u64 n, u64 h, u64 c, u64 p_h)
 
   for (u64 i = 0; i < n; i++)
     {
-      u64 p = get_random() % 100;
+      // draw a random number between [0, 100] to compare with probability p_h
+      u64 p = get_random() % 101;
 
       if (p < p_h)
         addr[i] = get_random() % h;     // [0, h[
@@ -152,6 +168,7 @@ u64 *gen_addr_random(u64 n, u64 h, u64 c, u64 p_h)
   return addr;
 }
 
+// [s, s, .., s]
 u64 *gen_size_seq(u64 n, u64 s)
 {
   u64 *size = aligned_alloc(ALIGNED, sizeof(u64) * n);
@@ -162,6 +179,7 @@ u64 *gen_size_seq(u64 n, u64 s)
   return size;
 }
 
+// [random(s_min, s_max), ...]
 u64 *gen_size_uniform(u64 n, u64 s_min, u64 s_max)
 {
   u64 *size = aligned_alloc(ALIGNED, sizeof(u64) * n);
@@ -191,29 +209,36 @@ u64 *gen_size_normal(u64 n, u64 s_mean, u64 s_var)
 
 request_t *gen_request(config_t *config)
 {
+  // Allocated memory
   request_t *r = aligned_alloc(ALIGNED, sizeof(request_t));
 
+  // Check if request if allocated
   if (!r)
     exit(2);
 
+  // Set the number of request
   r->n = config->n;
 
+  // Generate estampille
   r->estampille = gen_estampille(config->n);
 
+  // Generate start time
   if (strcmp(config->start, "seq") == 0)
     r->start = gen_start_seq(config->n, config->t_0, config->t);
   else if (strcmp(config->start, "uniform") == 0)
     r->start = gen_start_uniform(config->n, config->t_min, config->t_max);
   else
-    exit(3);
+    printf("Error: start_time %s instead of {seq, uniform}\n", config->start), exit(3);
 
+  // Generate type
   if (strcmp(config->type, "random") == 0)
     r->type = gen_type_seq(config->n, config->p);
-  else if (strcmp(config->type, "uniform") == 0)
+  else if (strcmp(config->type, "stream") == 0)
     r->type = gen_type_uniform(config->n, config->n_r, config->n_w);
   else
-    exit(3);
+    printf("Error: type %s instead of {random, stream}\n", config->type), exit(3);
 
+  // Generate address
   if (strcmp(config->address, "seq") == 0)
     r->address = gen_addr_seq(config->n, config->a, config->s);
   else if (strcmp(config->address, "uniform") == 0)
@@ -221,8 +246,9 @@ request_t *gen_request(config_t *config)
   else if (strcmp(config->address, "random") == 0)
     r->address = gen_addr_random(config->n, config->h, config->c, config->p_h);
   else
-    exit(3);
+    printf("Error: type %s instead of {seq, uniform, random}\n", config->address), exit(3);
 
+  // Generate size
   if (strcmp(config->size, "seq") == 0)
     r->size = gen_size_seq(config->n, config->s_size);
   else if (strcmp(config->size, "uniform") == 0)
@@ -230,7 +256,7 @@ request_t *gen_request(config_t *config)
   else if (strcmp(config->size, "normal") == 0)
     r->size = gen_size_normal(config->n, config->s_mean, config->s_var);
   else
-    exit(3);
+    printf("Error: type %s instead of {seq, uniform, normal}\n", config->size), exit(3);
 
   return r;
 }
@@ -248,13 +274,13 @@ void print_request(char *filename, request_t *r)
   FILE *f = fopen(filename, "w");
 
   // Check if is open
-  // Check if is open
   if (!f)
     {
       printf("Error: can not open the file %s\n", filename);
       exit(1);
     }
 
+  // Print request
   for (u64 i = 0; i < r->n; i++)
     {
       fprintf(f, "%lld %lld %lld %lld %lld\n",
@@ -265,6 +291,7 @@ void print_request(char *filename, request_t *r)
               r->size[i]);
     }
 
+  // Close file
   fclose(f);
 }
 
